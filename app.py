@@ -13,42 +13,36 @@ from sklearn.metrics.pairwise import cosine_similarity
 st.set_page_config(
     page_title="CareerCopilot AI", 
     page_icon="🚀", 
-    layout="wide" # This makes your app take up more of the screen!
+    layout="wide" 
 )
 # --- UTILITIES ---
 def reset_app():
-    """Clears all session data and restarts the app."""
     st.cache_data.clear()
     st.rerun()
 
-# --- 1. SETUP & CONFIG ---
 # --- 1. SETUP & CONFIG ---
 load_dotenv()  # This loads the .env file
 
 # Try to get the key from the environment
 api_key = os.getenv("GOOGLE_API_KEY") 
 
-# If it's empty, try the other common name
 if not api_key:
     api_key = os.getenv("GEMINI_API_KEY")
 
-# Safety Check: If still no key, show a clear error in Streamlit
 if not api_key:
     st.error("🔑 API Key not found! Please check your .env file.")
     st.stop() 
 
 genai.configure(api_key=api_key)
-# Try the most stable production name
-model = genai.GenerativeModel('gemini-2.5-flash') # The current active model
 
-# Temporary debug line - check your VS Code terminal for the output
+model = genai.GenerativeModel('gemini-2.5-flash') 
+
+
 #print([m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods])
+
 # --- 2. AI CORE FUNCTIONS ---
-
-
-
 def get_ai_suggestions(resume_text, job_desc, missing_skills):
-    """Generates specific career advice to bridge the gap."""
+    
     prompt = f"""
     Compare this resume to the job description. 
     Missing Skills: {', '.join(missing_skills)}
@@ -66,7 +60,7 @@ def get_ai_suggestions(resume_text, job_desc, missing_skills):
         return "Could not generate suggestions."
 
 def get_interview_questions(job_desc):
-    """Generates interview questions and answers based on the JD in JSON format."""
+    
     prompt = f"""
     You are an expert technical recruiter. Analyze this Job Description, identify the core technical skills, and generate 5 targeted interview questions.
     
@@ -104,7 +98,7 @@ def extract_text_from_pdf(uploaded_file):
     return text
 
 def calculate_match_accurate(resume_text, job_desc):
-    # This prompt asks the AI to extract AND match in one go
+    
     prompt = f"""
     You are an expert ATS System. Compare the Resume to the Job Description.
     
@@ -129,12 +123,10 @@ def calculate_match_accurate(resume_text, job_desc):
         matched = data.get("matched", [])
         missing = data.get("missing", [])
         
-        # We still use TF-IDF as a "sanity check" for the final score
         vectorizer = TfidfVectorizer(stop_words='english')
         tfidf = vectorizer.fit_transform([resume_text.lower(), job_desc.lower()])
         cosine_sim = cosine_similarity(tfidf[0:1], tfidf[1:2])[0][0]
         
-        # Weighted Final Score: 80% AI Logic, 20% Math Similarity
         final_score = (ai_skill_score * 0.8) + (cosine_sim * 100 * 0.2)
         
         return round(final_score, 2), matched, missing
@@ -149,7 +141,6 @@ st.title("🚀 CareerCopilot: Resume & Interview AI")
 st.caption("Your all-in-one assistant for ATS screening, skill matching, and interview prep.")
 st.markdown("---")
 
-# 1. MOVE INPUTS TO A SIDEBAR
 with st.sidebar:
     st.header("📋 Input Data")
     job_description = st.text_area("Job Description", height=250, placeholder="Paste JD here...")
@@ -159,7 +150,7 @@ with st.sidebar:
     if st.button("🗑️ Clear All", use_container_width=True, type="secondary"):
         reset_app()
 
-    st.divider() # Adds a clean line between the button and the tips
+    st.divider() 
     st.markdown("### 💡 How to use:")
     st.info("""
     1. Paste the **Job Description**.
@@ -168,7 +159,6 @@ with st.sidebar:
     4. Explore the tabs for insights!
     """)
 
-# 2. MAIN SCREEN RESULTS
 if analyze_btn and uploaded_files and job_description:
     results = []
     with st.spinner("AI is analyzing skills & generating insights..."):
@@ -187,13 +177,11 @@ if analyze_btn and uploaded_files and job_description:
     results = sorted(results, key=lambda x: x["score"], reverse=True)
     top = results[0]
 
-    # Display the Top Candidate in a nice container with a Metric
     st.success(f"### 🏆 Top Candidate: {top['name']}")
     st.metric(label="Overall ATS Match", value=f"{top['score']}%")
     st.progress(int(top['score'])) # Visual progress bar
     st.divider()
 
-    # 3. USE TABS FOR CLEAN ORGANIZATION
     tab1, tab2, tab3 = st.tabs(["📊 Candidate Breakdown", "💡 AI Advice", "🎯 Interview Prep"])
 
     with tab1:
