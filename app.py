@@ -102,7 +102,7 @@ if not api_key:
 @st.cache_resource
 def load_model():
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel("models/gemini-1.5-flash")
+    return genai.GenerativeModel("gemini-1.5-flash-latest")
 
 model = load_model()
 
